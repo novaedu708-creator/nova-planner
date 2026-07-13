@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nova Academy 26-27 Planner (FSD)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #f3f4f6; 
+            margin: 0;
+            padding: 0;
+        }
+        .segment-group rect { 
+            stroke: rgba(0,0,0,0.05); 
+            stroke-width: 1px; 
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .segment-group rect:hover {
+            opacity: 0.85;
+        }
+        .calc-input {
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1em;
+        }
+        .slide-down {
+            animation: slideDown 0.3s ease-out forwards;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8 flex justify-center items-center min-h-screen">
+
+    <div class="w-full max-w-5xl bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+        <div class="p-6 md:p-8 border-b border-gray-100 bg-white">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">Nova Academy 2026-2027 Year Planner</h1>
+            
+            <div class="flex flex-col md:flex-row gap-6 bg-gray-50 p-5 rounded-xl border border-gray-200/60">
+                <div class="flex flex-col">
+                    <label class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Base Schedule</label>
+                    <select id="baseSchedule" class="p-2.5 border border-gray-300 rounded-lg bg-white shadow-sm outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-700 font-medium cursor-pointer transition-all">
+                        <option value="FSD Aligned">FSD Aligned (Fullerton SD)</option>
+                        <option value="Nova Custom">Nova Custom (Extended Break)</option>
+                    </select>
+                </div>
+                
+                <div class="flex flex-col justify-center border-t md:border-t-0 md:border-l border-gray-200 pt-4 md:pt-0 md:pl-6">
+                    <label class="flex items-center space-x-3 cursor-pointer group">
+                        <div class="relative flex items-center justify-center">
+                            <input type="checkbox" id="examPrep" checked class="peer sr-only">
+                            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-700 group-hover:text-blue-600 transition-colors">Exam Prep Intensives</span>
+                    </label>
+                </div>
+
+                <div class="md:ml-auto flex flex-col items-center justify-center bg-blue-50/50 px-6 py-3 rounded-xl border border-blue-100/50">
+                    <span class="text-xs font-bold text-blue-500 uppercase tracking-wider mb-1">Instructional Days</span>
+                    <span id="daysDisplay" class="text-4xl font-extrabold text-blue-900 leading-none">180</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-6 md:p-8 bg-white relative">
+            <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Academic Timeline</h2>
+            <div id="viz" class="w-full h-64 md:h-80 relative"></div>
+            
+            <div class="flex gap-4 mt-6 justify-center text-xs font-medium text-gray-500">
+                <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-blue-500"></div> Instructional</div>
+                <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-amber-400"></div> Exam Prep</div>
+                <div class="flex items-center gap-1.5"><div class="w-3 h-3 rounded bg-gray-200 border border-gray-300"></div> Break</div>
+            </div>
+        </div>
+        
+        <div class="p-6 md:p-8 bg-gray-50 border-t border-gray-100">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-emerald-500"><rect width="16" height="20" x="4" y="2" rx="2"/><line x1="8" x2="16" y1="6" y2="6"/><line x1="16" x2="16.01" y1="10" y2="10"/><line x1="12" x2="12.01" y1="10" y2="10"/><line x1="8" x2="8.01" y1="10" y2="10"/><line x1="16" x2="16.01" y1="14" y2="14"/><line x1="12" x2="12.01" y1="14" y2="14"/><line x1="8" x2="8.01" y1="14" y2="14"/><line x1="16" x2="16.01" y1="18" y2="18"/><line x1="12" x2="12.01" y1="18" y2="18"/><line x1="8" x2="8.01" y1="18" y2="18"/></svg>
+                Monthly Tuition Estimator (26-27)
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
+                <!-- Inputs Section -->
+                <div class="md:col-span-7 space-y-6">
+                    
+                    <!-- Student Grade & Afterschool -->
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                        <h3 class="font-semibold text-gray-700 border-b pb-2">1. Core Program</h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div class="flex flex-col">
+                                <label class="text-xs font-bold text-gray-500 mb-1.5">Grade Level</label>
+                                <select id="calcGrade" class="calc-input p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+                                    <option value="none">-- Select Grade --</option>
+                                    <option value="tk">TK - Kinder</option>
+                                    <option value="elem">1st - 6th Grade</option>
+                                    <option value="mid">Middle School</option>
+                                    <option value="hs">High School (Online)</option>
+                                </select>
+                            </div>
+                            <div class="flex flex-col">
+                                <label class="text-xs font-bold text-gray-500 mb-1.5">Afterschool Days</label>
+                                <select id="calcDays" class="calc-input p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none disabled:bg-gray-100 disabled:text-gray-400" disabled>
+                                    <option value="0">None (Tutoring Only)</option>
+                                    <option value="2-3">2-3 Days/Week</option>
+                                    <option value="4-5">4-5 Days/Week</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Add-on Tutoring -->
+                    <div class="bg-white p-5 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                        <div class="flex justify-between items-center border-b pb-2">
+                            <h3 class="font-semibold text-gray-700">2. Add-on Tutoring</h3>
+                            <div class="flex items-center space-x-2">
+                                <label for="discountRateInput" class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Member DC Rate</label>
+                                <div class="relative">
+                                    <span class="absolute inset-y-0 left-0 flex items-center pl-2 text-gray-500 text-sm font-medium pointer-events-none">$</span>
+                                    <input type="number" id="discountRateInput" min="0" step="1" value="0" class="w-16 pl-6 pr-2 py-1 border border-emerald-300 rounded bg-emerald-50 text-emerald-700 text-sm focus:ring-2 focus:ring-emerald-500 outline-none text-right font-bold transition-all">
+                                </div>
+                                <span class="text-[11px] font-bold text-gray-400 uppercase tracking-wider">/ hr</span>
+                            </div>
+                        </div>
+                        
+                        <div id="tutoringRows" class="space-y-3">
+                            <!-- Dynamic rows will go here -->
+                        </div>
+                        <button id="addTutoringBtn" class="text-sm font-medium text-emerald-600 hover:text-emerald-700 flex items-center gap-1 py-1 px-2 rounded hover:bg-emerald-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                            Add Class
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Receipt Summary -->
+                <div class="md:col-span-5">
+                    <div class="bg-gray-800 rounded-xl shadow-lg text-white p-6 sticky top-6">
+                        <h3 class="font-bold text-lg mb-4 text-gray-100">Estimated Monthly</h3>
+                        
+                        <div class="space-y-3 mb-6 text-sm">
+                            <div class="flex justify-between items-center text-gray-300">
+                                <span>Afterschool Base</span>
+                                <span id="summaryBase">$0</span>
+                            </div>
+                            <div class="flex justify-between items-center text-gray-300">
+                                <span>Tutoring (Actual Mo.)</span>
+                                <span id="summaryTutoring">$0</span>
+                            </div>
+                            <div id="summaryDiscountRow" class="flex justify-between items-center text-emerald-400 hidden font-medium">
+                                <span>Member Discount</span>
+                                <span id="summaryDiscount">-$0</span>
+                            </div>
+                            <div class="flex justify-between items-center text-gray-400 pt-2 border-t border-gray-700/50">
+                                <span>New Registration Fee</span>
+                                <span>$50 <span class="text-xs text-gray-500">(1st mo only)</span></span>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-between items-end border-t border-gray-600 pt-4">
+                            <span class="text-gray-300 font-medium">Total (Recurring)</span>
+                            <div class="text-right">
+                                <span class="text-3xl font-extrabold text-white" id="summaryTotal">$0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const state = {
+            baseSchedule: 'FSD Aligned',
+            examPrep: true,
+            instructionalDays: 180,
+            timelineData: [],
+            pricing: {
+                afterschool: {
+                    'tk': { '2-3': 740, '4-5': 840 },
+                    'elem': { '2-3': 690, '4-5': 790 },
+                    'mid': { '2-3': 740, '4-5': 840 },
+                    'hs': { '2-3': 0, '4-5': 0 }
+                },
+                tutoring: {
+                    'tk': {
+                        'Math': { 'Group (2+)': 45, '1:1': 70 },
+                        'English': { 'Group (2+)': 45, '1:1': 70 },
+                        'Gate Prep': { 'Group (2+)': 50, '1:1': 75 },
+                        'Book Club': { 'Group (2+)': 45, '1:1': 70 },
+                        'Book Publishing': { 'Group (2+)': 50, '1:1': 75 },
+                        'Scratch Coding': { 'Group (2+)': 50, '1:1': 70 },
+                        'Python Coding': { 'Group (2+)': 55, '1:1': 75 },
+                        'Vex Robotics': { 'Group (2+)': 60, '1:1': 80 },
+                        'Vex Team': { 'Group (2+)': 60 },
+                        'John Locke Essay': { 'Group (2+)': 55, '1:1': 80 }
+                    },
+                    'elem': {
+                        'Math': { 'Group (2+)': 45, '1:1': 70 },
+                        'English': { 'Group (2+)': 45, '1:1': 70 },
+                        'Gate Prep (K-3rd)': { 'Group (2+)': 50, '1:1': 75 },
+                        'Book Club': { 'Group (2+)': 45, '1:1': 70 },
+                        'Book Publishing': { 'Group (2+)': 50, '1:1': 75 },
+                        'Scratch Coding': { 'Group (2+)': 50, '1:1': 70 },
+                        'Python Coding': { 'Group (2+)': 55, '1:1': 75 },
+                        'Vex Robotics': { 'Group (2+)': 60, '1:1': 80 },
+                        'Vex Team': { 'Group (2+)': 60 },
+                        'John Locke Essay': { 'Group (2+)': 55, '1:1': 80 }
+                    },
+                    'mid': {
+                        'Math (Regular)': { 'Group (2+)': 55, '1:1': 80 },
+                        'Math (Honors)': { 'Group (2+)': 60, '1:1': 85 },
+                        'English (Regular)': { 'Group (2+)': 55, '1:1': 80 },
+                        'English (Honors)': { 'Group (2+)': 60, '1:1': 85 },
+                        'Pre-Algebra': { 'Group (2+)': 55, '1:1': 80 },
+                        'Algebra 1 (Regular)': { 'Group (2+)': 55, '1:1': 80 },
+                        'Algebra 1 (Honors)': { 'Group (2+)': 60, '1:1': 85 },
+                        'Geometry (Regular)': { 'Group (2+)': 55, '1:1': 80 },
+                        'Geometry (Honors)': { 'Group (2+)': 60, '1:1': 85 },
+                        'Algebra 2 (Regular)': { 'Group (2+)': 55, '1:1': 80 },
+                        'Algebra 2 (Honors)': { 'Group (2+)': 60, '1:1': 85 },
+                        'Science (Regular)': { 'Group (2+)': 55, '1:1': 80 },
+                        'Science (Honors)': { 'Group (2+)': 60, '1:1': 85 },
+                        'History (Regular)': { 'Group (2+)': 55, '1:1': 80 },
+                        'History (Honors)': { 'Group (2+)': 60, '1:1': 85 },
+                        'Book Club': { 'Group (2+)': 55, '1:1': 80 },
+                        'Book Publishing': { 'Group (2+)': 60, '1:1': 85 },
+                        'Scratch Coding': { 'Group (2+)': 50, '1:1': 70 },
+                        'Python Coding': { 'Group (2+)': 55, '1:1': 75 },
+                        'Vex Robotics': { 'Group (2+)': 60, '1:1': 80 },
+                        'Vex Team': { 'Group (2+)': 60 },
+                        'John Locke Essay': { 'Group (2+)': 65, '1:1': 90 }
+                    },
+                    'hs': {
+                        'Pre-Algebra': { 'Group (2+)': 65, '1:1': 90 },
+                        'Algebra 1 (Regular)': { 'Group (2+)': 65, '1:1': 90 },
+                        'Algebra 1 (Honors)': { 'Group (2+)': 70, '1:1': 95 },
+                        'Geometry (Regular)': { 'Group (2+)': 65, '1:1': 90 },
+                        'Geometry (Honors)': { 'Group (2+)': 70, '1:1': 95 },
+                        'Algebra 2 (Regular)': { 'Group (2+)': 65, '1:1': 90 },
+                        'Algebra 2 (Honors)': { 'Group (2+)': 70, '1:1': 95 },
+                        'Pre-Cal/Trig (Regular)': { 'Group (2+)': 65, '1:1': 90 },
+                        'Pre-Cal/Trig (Honors)': { 'Group (2+)': 70, '1:1': 95 },
+                        'ELA (Regular)': { 'Group (2+)': 65, '1:1': 90 },
+                        'ELA (Honors)': { 'Group (2+)': 70, '1:1': 95 },
+                        'AP Class': { 'Group (2+)': 75, '1:1': 100 }
+                    }
+                }
+            },
+            calc: {
+                grade: 'none',
+                days: '0',
+                discountRate: 0,
+                tutoring: [] // {id, subject, format, daysPerWk, hrsPerClass, classesPerMo}
+            }
+        };
+
+        // Utility to count active weekdays
+        function countWeekdays(start, end) {
+            let count = 0;
+            let cur = new Date(start);
+            while (cur < end) {
+                let day = cur.getDay();
+                if (day !== 0 && day !== 6) count++;
+                cur.setDate(cur.getDate() + 1);
+            }
+            return count;
+        }
+
+        const updateSimulation = () => {
+            const isCustom = state.baseSchedule === "Nova Custom";
+            const ep = state.examPrep;
+            const segments = [];
+
+            // 1. Fall Term 1: Aug 10, 2026 - Nov 20, 2026
+            const term1Start = new Date(2026, 7, 10); 
+            const term1End = new Date(2026, 10, 20); 
+            
+            if (ep) {
+                const prepStart = new Date(2026, 10, 2); // Start prep 3 weeks prior
+                segments.push({ label: "Fall Term 1", start: term1Start, end: prepStart, type: "Instructional" });
+                segments.push({ label: "Midterm Prep", start: prepStart, end: term1End, type: "Exam Prep" });
+            } else {
+                segments.push({ label: "Fall Term 1", start: term1Start, end: term1End, type: "Instructional" });
+            }
+
+            // 2. Thanksgiving Break: Nov 23 - Nov 27
+            segments.push({ label: "Thanksgiving", start: term1End, end: new Date(2026, 10, 30), type: "Break" });
+
+            // 3. Fall Term 2: Nov 30 - Dec 17 (Dec 18 is non-attendance day)
+            const term2Start = new Date(2026, 10, 30);
+            const term2End = new Date(2026, 11, 18);
+            segments.push({ label: "Fall Term 2", start: term2Start, end: term2End, type: "Instructional" });
+
+            // 4. Winter Break: Dec 21 - Jan 4 (Classes resume Jan 5)
+            const winterEnd = isCustom ? new Date(2027, 0, 11) : new Date(2027, 0, 5); 
+            segments.push({ label: "Winter Break", start: term2End, end: winterEnd, type: "Break" });
+
+            // 5. Spring Term 1: Jan 5 - Mar 12
+            const term3Start = winterEnd;
+            const term3End = new Date(2027, 2, 12);
+            segments.push({ label: "Spring Term 1", start: term3Start, end: term3End, type: "Instructional" });
+
+            // 6. Spring Break: Mar 15 - Mar 19
+            segments.push({ label: "Spring Break", start: term3End, end: new Date(2027, 2, 22), type: "Break" });
+
+            // 7. Spring Term 2: Mar 22 - May 28
+            const term4Start = new Date(2027, 2, 22);
+            const term4End = new Date(2027, 4, 28);
+            if (ep) {
+                const prepStart = new Date(2027, 4, 10);
+                segments.push({ label: "Spring Term 2", start: term4Start, end: prepStart, type: "Instructional" });
+                segments.push({ label: "Finals Prep", start: prepStart, end: term4End, type: "Exam Prep" });
+            } else {
+                segments.push({ label: "Spring Term 2", start: term4Start, end: term4End, type: "Instructional" });
+            }
+
+            state.timelineData = segments;
+            
+            let totalDays = 0;
+            segments.forEach(seg => {
+                if(seg.type === "Instructional" || seg.type === "Exam Prep") {
+                    totalDays += countWeekdays(seg.start, seg.end);
+                }
+            });
+            
+            document.getElementById('daysDisplay').innerText = isCustom ? totalDays - 5 : 180;
+            renderTimeline();
+        }
+
+        function initD3() {
+            renderTimeline();
+        }
+
+        function renderTimeline() {
+            const container = document.getElementById('viz');
+            if(!container) return;
+            container.innerHTML = ''; // Clear previous SVG
+
+            const width = container.clientWidth || 800;
+            const height = container.clientHeight || 300;
+            const margin = { top: 20, right: 20, bottom: 30, left: 20 };
+
+            const svg = d3.select('#viz')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            const minDate = new Date(2026, 7, 1);
+            const maxDate = new Date(2027, 5, 15);
+
+            const xScale = d3.scaleTime()
+                .domain([minDate, maxDate])
+                .range([margin.left, width - margin.right]);
+
+            const xAxis = d3.axisBottom(xScale)
+                .ticks(d3.timeMonth.every(1))
+                .tickFormat(d3.timeFormat("%b"));
+
+            svg.append("g")
+                .attr("transform", `translate(0,${height - margin.bottom})`)
+                .call(xAxis)
+                .selectAll("text")
+                .attr("class", "text-xs fill-gray-500 font-medium");
+
+            const colorScale = {
+                "Instructional": "#3b82f6",
+                "Exam Prep": "#fbbf24",
+                "Break": "#e5e7eb"
+            };
+
+            const yPos = margin.top + 20;
+            const barHeight = height - margin.top - margin.bottom - 40;
+
+            // Remove existing tooltips to prevent duplicates
+            d3.selectAll('.d3-tooltip').remove();
+            
+            const tooltip = d3.select('body').append('div')
+                .attr('class', 'd3-tooltip absolute hidden bg-gray-900 text-white text-xs px-2 py-1 rounded pointer-events-none z-50 transform -translate-x-1/2 -translate-y-full mt-[-10px]');
+
+            const bars = svg.selectAll(".segment")
+                .data(state.timelineData)
+                .enter()
+                .append("g")
+                .attr("class", "segment-group");
+
+            bars.append("rect")
+                .attr("class", "segment")
+                .attr("x", d => xScale(d.start))
+                .attr("y", yPos)
+                .attr("width", d => Math.max(2, xScale(d.end) - xScale(d.start)))
+                .attr("height", barHeight)
+                .attr("fill", d => colorScale[d.type])
+                .attr("rx", 4)
+                .on("mouseover", (event, d) => {
+                    tooltip.html(`<strong>${d.label}</strong><br/>${d3.timeFormat("%b %d")(d.start)} - ${d3.timeFormat("%b %d")(d.end)}`)
+                        .style("left", (event.pageX) + "px")
+                        .style("top", (event.pageY) + "px")
+                        .classed("hidden", false);
+                })
+                .on("mouseout", () => {
+                    tooltip.classed("hidden", true);
+                });
+        }
+
+        function generateId() {
+            return Math.random().toString(36).substr(2, 9);
+        }
+
+        function updateCalculatorUI() {
+            const gradeSelect = document.getElementById('calcGrade');
+            const daysSelect = document.getElementById('calcDays');
+            const addBtn = document.getElementById('addTutoringBtn');
+            
+            // Enable/disable based on grade
+            if (state.calc.grade === 'none') {
+                daysSelect.disabled = true;
+                addBtn.disabled = true;
+                state.calc.days = '0';
+                daysSelect.value = '0';
+                // clear tutoring
+                state.calc.tutoring = [];
+                document.getElementById('tutoringRows').innerHTML = '';
+            } else if (state.calc.grade === 'hs') {
+                daysSelect.disabled = true;
+                addBtn.disabled = false;
+                state.calc.days = '0';
+                daysSelect.value = '0';
+            } else {
+                daysSelect.disabled = false;
+                addBtn.disabled = false;
+            }
+
+            calculateTotals();
+        }
+
+        function renderTutoringRows() {
+            const container = document.getElementById('tutoringRows');
+            container.innerHTML = '';
+
+            const availableSubjects = state.pricing.tutoring[state.calc.grade] || {};
+
+            state.calc.tutoring.forEach((item, index) => {
+                const row = document.createElement('div');
+                row.className = 'flex gap-2 items-end slide-down flex-wrap sm:flex-nowrap';
+                
+                // Subject Select
+                const subjDiv = document.createElement('div');
+                subjDiv.className = 'flex-[2] flex flex-col min-w-[120px]';
+                subjDiv.innerHTML = `<label class="text-[10px] font-bold text-gray-500 mb-1 uppercase">Subject</label>`;
+                const subjSelect = document.createElement('select');
+                subjSelect.className = 'calc-input p-2 border border-gray-300 rounded bg-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none w-full truncate';
+                
+                let subjOptions = `<option value="">Select Class...</option>`;
+                Object.keys(availableSubjects).forEach(name => {
+                    subjOptions += `<option value="${name}" ${item.subject === name ? 'selected' : ''}>${name}</option>`;
+                });
+                subjSelect.innerHTML = subjOptions;
+                
+                subjSelect.addEventListener('change', (e) => {
+                    item.subject = e.target.value;
+                    // Default to Group if available, else first format
+                    if(availableSubjects[item.subject]) {
+                        const formats = Object.keys(availableSubjects[item.subject]);
+                        item.format = formats.includes('Group (2+)') ? 'Group (2+)' : formats[0];
+                    } else {
+                        item.format = '';
+                    }
+                    renderTutoringRows(); 
+                    updateCalculatorUI();
+                });
+                subjDiv.appendChild(subjSelect);
+
+                // Format Select (Group vs 1:1)
+                const formatDiv = document.createElement('div');
+                formatDiv.className = 'flex-1 flex flex-col min-w-[95px]';
+                formatDiv.innerHTML = `<label class="text-[10px] font-bold text-gray-500 mb-1 uppercase">Format</label>`;
+                const formatSelect = document.createElement('select');
+                formatSelect.className = 'calc-input p-2 border border-gray-300 rounded bg-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none w-full';
+                
+                if (item.subject && availableSubjects[item.subject]) {
+                    const prices = availableSubjects[item.subject];
+                    Object.keys(prices).forEach(fmt => {
+                        formatSelect.innerHTML += `<option value="${fmt}" ${item.format === fmt ? 'selected' : ''}>${fmt} ($${prices[fmt]})</option>`;
+                    });
+                } else {
+                    formatSelect.innerHTML = `<option value="">--</option>`;
+                    formatSelect.disabled = true;
+                }
+
+                formatSelect.addEventListener('change', (e) => {
+                    item.format = e.target.value;
+                    calculateTotals();
+                });
+                formatDiv.appendChild(formatSelect);
+
+                // Days/Wk Select
+                const daysWkDiv = document.createElement('div');
+                daysWkDiv.className = 'w-14 sm:w-16 flex flex-col';
+                daysWkDiv.innerHTML = `<label class="text-[10px] font-bold text-gray-500 mb-1 uppercase" title="Days per week">Days/Wk</label>`;
+                const daysWkSelect = document.createElement('select');
+                daysWkSelect.className = 'calc-input p-2 border border-gray-300 rounded bg-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none w-full';
+                [1, 2, 3].forEach(d => {
+                    daysWkSelect.innerHTML += `<option value="${d}" ${item.daysPerWk === d ? 'selected' : ''}>${d}</option>`;
+                });
+                daysWkSelect.addEventListener('change', (e) => {
+                    item.daysPerWk = parseInt(e.target.value);
+                    item.classesPerMo = item.daysPerWk * 4; // Auto-update monthly classes when weekly changes
+                    renderTutoringRows(); 
+                    calculateTotals();
+                });
+                daysWkDiv.appendChild(daysWkSelect);
+
+                // Hrs/Class Select
+                const hrsClassDiv = document.createElement('div');
+                hrsClassDiv.className = 'w-14 sm:w-16 flex flex-col';
+                hrsClassDiv.innerHTML = `<label class="text-[10px] font-bold text-gray-500 mb-1 uppercase" title="Hours per class">Hrs/Day</label>`;
+                const hrsClassSelect = document.createElement('select');
+                hrsClassSelect.className = 'calc-input p-2 border border-gray-300 rounded bg-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none w-full';
+                [1, 1.5, 2, 3].forEach(h => {
+                    hrsClassSelect.innerHTML += `<option value="${h}" ${item.hrsPerClass === h ? 'selected' : ''}>${h}</option>`;
+                });
+                hrsClassSelect.addEventListener('change', (e) => {
+                    item.hrsPerClass = parseFloat(e.target.value);
+                    calculateTotals();
+                });
+                hrsClassDiv.appendChild(hrsClassSelect);
+
+                // Classes/Mo Input
+                const classesMoDiv = document.createElement('div');
+                classesMoDiv.className = 'w-16 sm:w-20 flex flex-col';
+                classesMoDiv.innerHTML = `<label class="text-[10px] font-bold text-gray-500 mb-1 uppercase" title="Total classes this month">Total/Mo</label>`;
+                const classesMoInput = document.createElement('input');
+                classesMoInput.type = 'number';
+                classesMoInput.min = '1';
+                classesMoInput.max = '20';
+                classesMoInput.className = 'p-2 border border-gray-300 rounded bg-white text-sm focus:ring-1 focus:ring-emerald-500 outline-none w-full px-2 text-center';
+                classesMoInput.value = item.classesPerMo;
+                classesMoInput.addEventListener('input', (e) => {
+                    item.classesPerMo = parseInt(e.target.value) || 0;
+                    calculateTotals();
+                });
+                classesMoDiv.appendChild(classesMoInput);
+
+                // Remove Btn
+                const rmBtn = document.createElement('button');
+                rmBtn.className = 'p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors mb-[1px]';
+                rmBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+                rmBtn.onclick = () => {
+                    state.calc.tutoring.splice(index, 1);
+                    renderTutoringRows();
+                    updateCalculatorUI();
+                };
+
+                row.appendChild(subjDiv);
+                row.appendChild(formatDiv);
+                row.appendChild(daysWkDiv);
+                row.appendChild(hrsClassDiv);
+                row.appendChild(classesMoDiv);
+                row.appendChild(rmBtn);
+                container.appendChild(row);
+            });
+        }
+
+        function calculateTotals() {
+            let base = 0;
+            let tutoringGross = 0;
+            let discount = 0;
+
+            const grade = state.calc.grade;
+            const days = state.calc.days;
+            const discountRate = state.calc.discountRate;
+
+            // 1. Base Afterschool
+            if (grade !== 'none' && grade !== 'hs' && days !== '0') {
+                base = state.pricing.afterschool[grade][days];
+            }
+
+            // 2. Tutoring
+            if (grade !== 'none') {
+                const subjects = state.pricing.tutoring[grade];
+                state.calc.tutoring.forEach(item => {
+                    if (item.subject && item.format && subjects[item.subject] && subjects[item.subject][item.format]) {
+                        const rate = subjects[item.subject][item.format];
+                        const costPerClass = rate * item.hrsPerClass;
+                        tutoringGross += costPerClass * item.classesPerMo;
+                        
+                        if (discountRate > 0) {
+                            discount += (discountRate * item.hrsPerClass) * item.classesPerMo; 
+                        }
+                    }
+                });
+            }
+
+            const total = base + tutoringGross - discount;
+
+            // Update DOM
+            document.getElementById('summaryBase').innerText = `$${base}`;
+            document.getElementById('summaryTutoring').innerText = `$${tutoringGross}`;
+            document.getElementById('summaryTotal').innerText = `$${total}`;
+            
+            const discRow = document.getElementById('summaryDiscountRow');
+            if (discount > 0) {
+                discRow.classList.remove('hidden');
+                document.getElementById('summaryDiscount').innerText = `-$${discount}`;
+            } else {
+                discRow.classList.add('hidden');
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            // Bind Input Events
+            document.getElementById('baseSchedule').addEventListener('change', (e) => {
+                state.baseSchedule = e.target.value;
+                updateSimulation();
+            });
+            
+            document.getElementById('examPrep').addEventListener('change', (e) => {
+                state.examPrep = e.target.checked;
+                updateSimulation();
+            });
+
+            document.getElementById('calcGrade').addEventListener('change', (e) => {
+                const oldGrade = state.calc.grade;
+                state.calc.grade = e.target.value;
+                // If grade changed, clear existing tutoring as options vary
+                if (oldGrade !== 'none' && oldGrade !== state.calc.grade) {
+                    state.calc.tutoring = [];
+                    renderTutoringRows();
+                }
+                updateCalculatorUI();
+            });
+
+            document.getElementById('calcDays').addEventListener('change', (e) => {
+                state.calc.days = e.target.value;
+                updateCalculatorUI();
+            });
+
+            document.getElementById('discountRateInput').addEventListener('input', (e) => {
+                state.calc.discountRate = parseFloat(e.target.value) || 0;
+                calculateTotals();
+            });
+            // Initialize discount rate state
+            state.calc.discountRate = parseFloat(document.getElementById('discountRateInput').value) || 0;
+
+            document.getElementById('addTutoringBtn').addEventListener('click', () => {
+                state.calc.tutoring.push({ id: generateId(), subject: '', format: '', daysPerWk: 1, hrsPerClass: 1, classesPerMo: 4 });
+                renderTutoringRows();
+                updateCalculatorUI();
+            });
+
+            // Initial render
+            initD3();
+            updateSimulation();
+
+            // Handle window resize for responsiveness
+            let resizeTimer;
+            window.addEventListener('resize', () => {
+                clearTimeout(resizeTimer);
+                resizeTimer = setTimeout(() => {
+                    initD3();
+                    renderTimeline();
+                }, 150);
+            });
+        });
+    </script>
+</body>
+</html>
